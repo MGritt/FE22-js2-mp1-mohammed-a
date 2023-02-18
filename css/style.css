@@ -1,0 +1,14 @@
+#wrapper {
+  display: flex;
+  flex-flow:row;
+  flex-wrap: wrap;
+}
+#userReg {
+  flex-basis:100%;
+}
+#game {
+  flex-basis:80%;
+}
+#hiscore {
+  flex-basis:20%;
+}
