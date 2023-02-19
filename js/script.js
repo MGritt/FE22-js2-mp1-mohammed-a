@@ -15,13 +15,13 @@ const db = getFirestore(app);
 
 const wrapper = document.querySelector('#wrapper');
 const userReg = document.querySelector('#userReg');
-const play = document.querySelector('#play');
+const play = document.querySelector('form');
 const name = document.querySelector('#name');
 const hiscore = document.querySelector('#hiscore');
 const status = document.querySelector('#status');
 let streakEl = document.querySelector('#streak');
 
-play.addEventListener('click', startGame);
+play.addEventListener('submit', startGame);
 
 function DOM(elData){
   for(let i=0; i<elData.length; i++){
@@ -165,8 +165,12 @@ async function SSP(ssp){
     const cpuChoice = cpuSSP[random];
     const spanUPoints = document.querySelector('#userStreak');
     const spanCPoints = document.querySelector('#cpuPoints');
-    const rank5 = document.querySelector('.rank5').value;
-
+    let rank5 = null;
+    if(document.querySelector('#rank5') !== null){
+      rank5 = document.querySelector('#rank5').className;
+    } else {
+      rank5 = 0;
+    }
     console.log("CPU chose: "+cpuChoice);
     console.log("User chose: "+ssp);
 
@@ -196,15 +200,6 @@ async function SSP(ssp){
         DOM(elData);
     } else {
       console.log("user lose");
-      if(userPoints > 0){
-        if(userPoints > rank5){
-          await addDoc(collection(db, "hiscore"), {
-            name: name.value,
-            score: userPoints
-          });
-          getHS();
-        }
-      }
       let elData = [{
         'create': true,
           'el':'h1',
@@ -215,18 +210,34 @@ async function SSP(ssp){
           'let': true
         }];
         DOM(elData);
-        reset(ssp, cpuChoice, userPoints);
+        if(userPoints > 0){
+          if(userPoints > rank5){
+            await addDoc(collection(db, "hiscore"), {
+              name: name.value,
+              score: userPoints
+            });
+            reset(ssp, cpuChoice, userPoints);
+            getHS();
+          } else {
+            reset(ssp, cpuChoice, userPoints);
+          }
+        } else {
+          reset(ssp, cpuChoice, userPoints);
+        }
     }
 }
 
 function reset(userInput, cpuInput, streak){
-  const rank5 = document.querySelector('.rank5').value;
+  let rank5 = null;
+  if(document.querySelector('#rank5') !== null){
+    rank5 = document.querySelector('#rank5').className;
+  } else {
+    rank5 = 0;
+  }
   let elData = [{
       'update': true,
       'el': '#welcome',
-      'text': `Du ${(streak == 0) ? 'förlora direkt!' : ''} ${(streak > 0) ? `vann ${streak} i rad
-      ${(streak > rank5) ? 'och hamna i topplistan!' : `men det räckte inte för att hamna i topplistan där lägsta poäng är ${rank5}`}
-      ` : ''} Starta nytt spel genom att antingen välja sten, sax eller påse!`
+      'text': `Du ${(streak == 0) ? 'förlora direkt!' : ''} ${(streak > 0) ? `vann ${streak} i rad ${(streak > rank5) ? 'och hamna i topplistan!' : `men det räckte inte för att hamna i topplistan där lägsta poäng är ${rank5}`}` : ''} Starta nytt spel genom att antingen välja sten, sax eller påse!`
     },
     {
       'update': true,
@@ -242,7 +253,7 @@ function reset(userInput, cpuInput, streak){
 }
 
 async function getHS(){
-  hiscore.innerHTML = "";
+  hiscore.innerHTML = await "";
   let hiscoreData = await getDocs(query(collection(db, "hiscore"), orderBy("score", "desc"), limit(5)));
   let hsElData = [];
   let i = 0;
@@ -252,9 +263,9 @@ async function getHS(){
     hsElData.push({
       'create': true,
       'el':'p',
-      'class': `rank${i}`,
+      'id': `rank${i}`,
+      'class' : dataArr.score,
       'text': `${dataArr.name} - ${dataArr.score} poäng`,
-      'value': dataArr.score,
       'to': 'hiscore',
       'score': dataArr.score
     });
